@@ -3,10 +3,12 @@ import os
 import glob
 import matplotlib.pyplot as plt
 
+
+# this is needed to align orientations to x,y,z,w
 def change_hand_trajectory(x):
     x[3], x[4], x[5], x[6] = x[4], x[6], x[3], x[5]
     return x
-
+# this is also needed
 def chang_AR_trajectory(traj):
     traj = traj[:,:7]
     return traj
