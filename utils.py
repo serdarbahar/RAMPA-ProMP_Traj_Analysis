@@ -2,19 +2,37 @@ import numpy as np
 import os 
 import glob
 import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import signal
 
-
-# this is needed to align orientations to x,y,z,w
+# these are needed to align orientations to x,y,z,w
 def change_hand_trajectory(x):
     x[3], x[4], x[5], x[6] = x[4], x[6], x[3], x[5]
-    return x
-# this is also needed
+    return x[:,:4]
 def chang_AR_trajectory(traj):
-    traj = traj[:,:7]
-    return traj
+    return traj[:,:4]
+
+def normalize_array(arr):
+#Normalize an array between 0 and 1
+#arr : all trajectories
+    max_values = []
+    min_values = []
+    for traj in arr:
+        traj = np.array(traj)
+        max_values.append(np.max(traj))
+        min_values.append(np.min(traj))
+
+    max_value = np.max(max_values)
+    min_value = np.min(min_values)
+    norm_arr = []
+    for traj in arr:
+        traj = np.array(traj)
+        traj = (traj-min_value) / (max_value-min_value)
+        norm_arr.append(traj)
+
+    return norm_arr
 
 def load_trajectories(folder_path):
-
     if os.path.isdir(folder_path):
         hand_trajectories = []
         ar_trajectories = []
@@ -33,67 +51,45 @@ def load_trajectories(folder_path):
         return hand_trajectories,ar_trajectories
     else:
         print("Folder not found")
-    
-def compute_parameters(traj):
 
-    jerk = np.diff(traj,3,axis=0)
-    jerk_mean = np.mean(np.linalg.norm(jerk,axis=1))
+def compute_jerk(traj, time_step):
+
+    velocity = np.gradient(traj, time_step, axis=0)
+    acceleration = np.gradient(velocity, time_step, axis=0)
+    jerk = np.gradient(acceleration, time_step, axis=0)
+        
+    return jerk
+
+def compute_parameters(traj ):
 
     mean_traj = np.mean(traj,axis=0)
     avg_deviation = np.mean(np.abs(traj - mean_traj))
 
-    variation = np.mean(np.var(traj,axis=0))
+    variation = np.sum(np.var(traj,axis=0))
     
-    return jerk_mean, avg_deviation, variation
+    return avg_deviation, variation
 
-def find_parameters(hand_trajectories,ar_trajectories):
-    
-    hand_parameters = []
-    ar_parameters = []
-    for traj in hand_trajectories:
-        j,d,v = compute_parameters(traj)
-        hand_parameters.append([j,d,v])
-    
-
-    for traj in ar_trajectories:
-        j,d,v = compute_parameters(traj)
-        ar_parameters.append([j,d,v])
-
-    return np.array(hand_parameters), np.array(ar_parameters)
+def find_mean_std(array):
+    return np.mean(array), np.std(array)
 
 def plot_results(hand_parameters,ar_parameters):
 
     plt.figure(figsize=(14,6))
-    plt.style.use("seaborn-darkgrid")
 
     plt.subplot(1,3,1)
-    plt.boxplot([hand_parameters[:,0],ar_parameters[:,0]], labels = ["Hand Trajectories", "AR trajectories"])
+    sns.boxplot([hand_parameters[:,0],ar_parameters[:,0]])
     plt.title("Jerk Comparision")
     plt.ylabel("Jerk")
 
     plt.subplot(1,3,2)
-    plt.boxplot([hand_parameters[:,1],ar_parameters[:,1]], labels = ["Hand Trajectories", "AR trajectories"])
+    sns.boxplot([hand_parameters[:,1],ar_parameters[:,1]])
     plt.title("Average Deviation Comparision")
     plt.ylabel("Average Deviation")
 
     plt.subplot(1,3,3)
-    plt.boxplot([hand_parameters[:,2],ar_parameters[:,2]], labels = ["Hand Trajectories", "AR trajectories"])
+    sns.boxplot([hand_parameters[:,2],ar_parameters[:,2]])
     plt.title("Variation Comparision")
     plt.ylabel("Variation")
 
     plt.tight_layout()
     plt.show()
-
-def find_result_one_user(folder_path, plot = False):
-
-    hand_trajectories, ar_trajectories = load_trajectories(folder_path)
-    hand_parameters, ar_parameters = find_parameters(hand_trajectories,ar_trajectories)
-    if plot == True:
-        plot_results(hand_parameters,ar_parameters)
-
-    return hand_trajectories, ar_trajectories, hand_parameters, ar_parameters
-    
-
-
-
-
