@@ -8,9 +8,9 @@ from scipy import signal
 # these are needed to align orientations to x,y,z,w
 def change_hand_trajectory(x):
     x[3], x[4], x[5], x[6] = x[4], x[6], x[3], x[5]
-    return x[:,:4]
+    return x[:,:3]
 def chang_AR_trajectory(traj):
-    return traj[:,:4]
+    return traj[:,:3]
 
 def normalize_array(arr):
 #Normalize an array between 0 and 1
@@ -43,6 +43,7 @@ def load_trajectories(folder_path):
         for file in hand_files:
             traj = change_hand_trajectory(np.load(file))
             hand_trajectories.append(traj)
+            
 
         for file in ar_files:
             traj = chang_AR_trajectory(np.load(file))
