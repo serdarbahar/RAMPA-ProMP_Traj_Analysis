@@ -3,6 +3,7 @@ import os
 import glob
 import matplotlib.pyplot as plt
 import utils 
+import seaborn as sns
 from scipy import signal
 
 
@@ -54,8 +55,13 @@ for folder_name in os.listdir(base_path):
         for traj in ar_trajectories:
             d_ar,v_ar = utils.compute_parameters(traj)
         ar_parameters.append([j_ar,d_ar,v_ar])
+    t1,t2,t3,t4 = d_h,v_h,d_ar,v_ar
+    total_error = t1+t2+t3+t4
+    hand = t1+t2
+    ar = t3+t4
+    print(f"{folder_name} total: {total_error:.3f} ar : {ar:.3f}")
             
-    
+
 hand_parameters = np.array(hand_parameters)
 ar_parameters = np.array(ar_parameters)
 
